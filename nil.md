@@ -1,5 +1,19 @@
 # `nil` in Go
 
+- [`nil` in Go](#nil-in-go)
+  - [When is `nil` when is not?](#when-is-nil-when-is-not)
+  - [Do not declare ***concrete error*** vars](#do-not-declare-concrete-error-vars)
+  - [Kinds of `nil`](#kinds-of-nil)
+    - [How are these useful](#how-are-these-useful)
+      - [`nil` pointers](#nil-pointers)
+      - [`nil` slices](#nil-slices)
+      - [`nil` maps](#nil-maps)
+      - [`nil` channels](#nil-channels)
+      - [`nil` functions](#nil-functions)
+        - [`nil` funcs for default values](#nil-funcs-for-default-values)
+      - [`nil` interfaces](#nil-interfaces)
+      - [`nil` is useful](#nil-is-useful)
+
 ## When is `nil` when is not?
 
 ```go
@@ -57,11 +71,11 @@ func main() {
 }
 ```
 
-> *!!! DO NOT return **concrete error** types*
+*!!! DO NOT return **concrete error** types*
 
 ## Kinds of `nil`
 
-| type       | pointer                                       |
+| type       | nil                                           |
 | ---------- | --------------------------------------------- |
 | pointers   | point to nothing                              |
 | slices     | have no backing array                         |
@@ -72,7 +86,7 @@ func main() {
 
 ### How are these useful
 
-#### `nil` pointer
+#### `nil` pointers
 
 ![image](https://user-images.githubusercontent.com/15927967/54538811-ec1ea500-49cf-11e9-9f07-d7cb6deeeadf.png)
 
@@ -303,6 +317,60 @@ func merge(out chan<- int, a, b <-chan int) {
 // whic will burn the CPU
 // to fix, add (fix 2)
 ```
-
+** Use `nil chan` to disable a select case**
 
 #### `nil` functions
+Go has **first-class functions**
+functhins can be used as struct fields
+they need a zer value; logically it is `nil`
+```go
+type Foo struct {
+  f func() error
+}
+```
+
+##### `nil` funcs for default values
+lazy initialization of variables
+`nil` can also imply default behavior 
+```go 
+func NewServer(logger func(string, ...interface{})) {
+  if logger == nil {
+    logger = log.Printf
+  }
+  logger("...")
+}
+```
+
+#### `nil` interfaces
+- `nil` interface is used as signal
+- `nil` pointer is a valid value for an interface
+```go
+type Summer interface {
+  func Sum() int
+}
+var t *tree
+var s Summer = t
+fmt.Println(t == nil, s.Sum()) // true, 0
+```
+- `nil` values and default values
+```go
+func doSum(s Summer) int {
+  if s == nil {
+    return 0
+  }
+  return s.Sum()
+}
+
+http.HandleFunc("google.com", nil) // use nil as default settings
+```
+**use `nil` as a signal as default value**
+
+#### `nil` is useful
+| type       | use                                     |
+| ---------- | --------------------------------------- |
+| pointers   | methods can be called on nil receivers  |
+| slices     | perfectly valid zero values             |
+| maps       | perfect as read-only values             |
+| channels   | essential for some concurrency patterns |
+| functions  | needed for completeness                 |
+| interfaces | the most used singal in Go (err != nil) |
